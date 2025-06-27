@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📘 Ask Your Book - AI-Powered PDF Q&A</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-icon.green { background: #28a745; }
+        .status-icon.red { background: #dc3545; }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f8ff;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .question-section {
+            margin-bottom: 2rem;
+        }
+
+        .question-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .question-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .response-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2rem;
+            min-height: 150px;
+            border: 1px solid #dee2e6;
+        }
+
+        .response-content {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #667eea;
+        }
+
+        .loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            margin-top: 1rem;
+        }
+
+        .clear-btn:hover {
+            box-shadow: 0 10px 25px rgba(220, 53, 69, 0.3);
+        }
+
+        .info-text {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📘 Ask Your Book</h1>
+        
+        <div class="status-bar" id="statusBar">
+            <div class="status-item">
+                <div class="status-icon red" id="bookStatus"></div>
+                <span id="bookStatusText">No book uploaded</span>
+            </div>
+            <div class="status-item">
+                <div class="status-icon red" id="apiStatus"></div>
+                <span id="apiStatusText">API not configured</span>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <form id="uploadForm">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" accept=".pdf" required />
+                </div>
+                <button type="submit" class="btn" id="uploadBtn">
+                    📤 Upload & Process Book
+                </button>
+            </form>
+            <p class="info-text">Upload a PDF book (max 16MB) to start asking questions</p>
+        </div>
+
+        <div class="question-section">
+            <textarea 
+                id="questionInput" 
+                class="question-input" 
+                placeholder="Ask a question about your book..." 
+                rows="3"
+            ></textarea>
+            <button onclick="askQuestion()" class="btn" id="askBtn" disabled>
+                🤔 Ask Question
+            </button>
+            <button onclick="clearStore()" class="btn clear-btn" id="clearBtn">
+                🗑️ Clear Book & Start Over
+            </button>
+        </div>
+
+        <div class="response-section">
+            <div id="response" class="response-content">
+                Upload a book and ask your first question to get started!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hasBook = false;
+
+        // Check status on page load
+        checkStatus();
+
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status');
+                const status = await response.json();
+                
+                hasBook = status.has_book;
+                
+                // Update UI based on status
+                updateBookStatus(hasBook);
+                updateApiStatus(status.groq_configured);
+                updateButtonStates();
+                
+            } catch (error) {
+                console.error('Error checking status:', error);
+            }
+        }
+
+        function updateBookStatus(hasBook) {
+            const statusIcon = document.getElementById('bookStatus');
+            const statusText = document.getElementById('bookStatusText');
+            
+            if (hasBook) {
+                statusIcon.className = 'status-icon green';
+                statusText.textContent = 'Book ready for questions';
+            } else {
+                statusIcon.className = 'status-icon red';
+                statusText.textContent = 'No book uploaded';
+            }
+        }
+
+        function updateApiStatus(configured) {
+            const statusIcon = document.getElementById('apiStatus');
+            const statusText = document.getElementById('apiStatusText');
+            
+            if (configured) {
+                statusIcon.className = 'status-icon green';
+                statusText.textContent = 'API configured';
+            } else {
+                statusIcon.className = 'status-icon red';
+                statusText.textContent = 'API not configured';
+            }
+        }
+
+        function updateButtonStates() {
+            const askBtn = document.getElementById('askBtn');
+            askBtn.disabled = !hasBook;
+        }
+
+        function showMessage(message, type = 'info') {
+            const response = document.getElementById('response');
+            response.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function showLoading(message) {
+            const response = document.getElementById('response');
+            response.innerHTML = `<div class="loading">${message}</div>`;
+        }
+
+        // Handle file upload
+        document.getElementById('uploadForm').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            // Disable button and show loading
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳ Processing...';
+            showLoading('Uploading and processing your book...');
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    hasBook = true;
+                    updateBookStatus(true);
+                    updateButtonStates();
+                    fileInput.value = '';
+                } else {
+                    showMessage(result.error || 'Upload failed', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('Network error during upload', 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '📤 Upload & Process Book';
+            }
+        };
+
+        async function askQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const askBtn = document.getElementById('askBtn');
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                showMessage('Please enter a question', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            askBtn.disabled = true;
+            askBtn.textContent = '🔍 Thinking...';
+            showLoading('Searching through your book for answers...');
+            
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.error) {
+                        showMessage(data.error, 'error');
+                    } else {
+                        const responseDiv = document.getElementById('response');
+                        responseDiv.innerHTML = `
+                            <strong>Question:</strong> ${question}<br><br>
+                            <strong>Answer:</strong><br>
+                            <div class="response-content">${data.answer}</div>
+                            ${data.source_documents ? `<br><small><em>Based on ${data.source_documents} text sections from your book</em></small>` : ''}
+                        `;
+                    }
+                } else {
+                    showMessage(data.error || 'Failed to get answer', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Question error:', error);
+                showMessage('Network error while asking question', 'error');
+            } finally {
+                askBtn.disabled = false;
+                askBtn.textContent = '🤔 Ask Question';
+                updateButtonStates();
+            }
+        }
+
+        async function clearStore() {
+            if (!confirm('Are you sure you want to clear the current book? You\'ll need to upload a new one.')) {
+                return;
+            }
+            
+            const clearBtn = document.getElementById('clearBtn');
+            clearBtn.disabled = true;
+            clearBtn.textContent = '⏳ Clearing...';
+            
+            try {
+                const response = await fetch('/clear', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage(result.message, 'success');
+                    hasBook = false;
+                    updateBookStatus(false);
+                    updateButtonStates();
+                } else {
+                    showMessage(result.error || 'Failed to clear', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Clear error:', error);
+                showMessage('Network error while clearing', 'error');
+            } finally {
+                clearBtn.disabled = false;
+                clearBtn.textContent = '🗑️ Clear Book & Start Over';
+            }
+        }
+
+        // Handle Enter key in question input
+        document.getElementById('questionInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
